@@ -79,7 +79,7 @@ flowchart TD
 - [x] **Milestone 1:** Construct static boundary box with nested loops.
 - [x] **Milestone 2:** Place static snake head token at grid center (`x=10, y=5`).
 - [x] **Milestone 3:** Implement turn-based movement loop via coordinate manipulation.
-- [ ] **Milestone 4:** Introduce food generation and collision detection.
+- [x] **Milestone 4:** Introduce food generation and collision detection.
 - [ ] **Milestone 5:** Implement real-time non-blocking input and body segment tracking.
 
 ```mermaid
@@ -93,8 +93,8 @@ gantt
     section Gameplay
     Turn-Based Movement       :done, m3, 2, 1
     Screen Clear & Buffer     :done, m4_prep, 3, 1
-    Food & Collision          :active, m4, 4, 1
-    Real-Time Input & Body    :m5, 5, 1
+    Food & Collision          :done, m4, 4, 1
+    Real-Time Input & Body    :active, m5, 5, 1
 ```
 
 ---
@@ -134,9 +134,11 @@ Sylhet Engineering College
 
 ## 📝 Changelog
 
-### [0.3.0] - Milestone 4 (In Progress)
-- Added boundary collision detection terminating the loop on wall impact.
-- Added support for numeric keypad controls (`2`, `8`, `4`, `6`).
+### [0.3.0] - Milestone 4 Complete
+- Implemented boundary collision detection to terminate the loop on wall impact.
+- Added numeric keypad movement controls (`2`, `8`, `4`, `6`).
+- Integrated pseudo-random food spawning (`*`) using `<time.h>` seeded `rand()` and modulo arithmetic.
+- Implemented food consumption logic and real-time score tracking counter.
 
 ### [0.2.1] - 2026-09-18
 - Added `system("clear")` to eliminate terminal scrolling and simulate stationary frame rendering.

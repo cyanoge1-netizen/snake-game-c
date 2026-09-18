@@ -1,29 +1,44 @@
 #include<stdio.h>
 #include<stdlib.h>
+#include<time.h>
 int main(){
 int height=10,width=20,i,j;
 int x=10,y=5; //x represents column (left to right) and y represents Row (up to down)
+int score =0;
 char move;
+//sead initialisation foe getting random position every time
+srand(time(NULL));
+
+//initial food coordinates (inside box)
+int foodX = (rand() % (width -2))+1;
+int foodY = (rand() % (height -2))+1;
+
+
 //i represents height (row) , j represents column (width)
 while(1){
 //screen clearing
 system("clear");
+//grid rendering
 for(i=0;i<height;i++){
 	for(j=0;j<width;j++){
 		if(i==0 || i==height-1 || j==0 || j==width-1){
-			printf("#");
+			printf("#"); // wall
 
 
 }
 
 		else if(i==y && j==x){
-//prints snake head
+			//prints snake head
 
 			printf("0");
- 
-} 
+}
+		else if(i==foodY && j== foodX){
+			printf("*"); //food token
+
+
+               }
 		else{
-			 //prints space inside box
+			 //box interior
 			printf(" ");
  
 }
@@ -57,12 +72,21 @@ for(i=0;i<height;i++){
 	else if(move == 'a' || move == 'A' || move == '4')
 		x--; //going left
 
-	// colision logic
+	// colision logic && score 
 	if(x <= 0 || x >= width-1 || y <= 0 || y >= height-1){
 		system("clear");
 		printf("\n Game Over !  Youve Hit the Wall !! \n\n");
+		printf("Score : %d \n\n", score);
 		break;
 }
+	if (x==foodX && y== foodY){
+		score++;
+		foodX = (rand() % (width -2))+1;
+		foodY = (rand() % (height -2))+1;
+
+}
+
+
 }
 return 0;
 
