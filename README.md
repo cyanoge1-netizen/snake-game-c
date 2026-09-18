@@ -129,6 +129,25 @@ Roll: 43 | Batch: 19
 Dept. of Computer Science & Engineering
 Sylhet Engineering College
 
+---
+
+## 📝 Changelog
+
+### [Unreleased] - In Progress
+- Fixed input buffer handling and quit (`q`) command behavior.
+- Working on screen clearing and collision detection.
+
+### [0.2.0] - Milestone 3
+- Added interactive game loop using `while(1)`.
+- Implemented turn-based movement logic via `w`, `a`, `s`, `d` inputs.
+- Updated documentation with architectural Mermaid diagrams.
+
+### [0.1.0] - Milestones 1 & 2
+- Implemented static terminal grid boundary using nested loops.
+- Added centered snake head token (`O` at `x=10, y=5`).
+- Initialized Git repository structure and basic documentation.
+
+
 ## 📄 License
 
 This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
