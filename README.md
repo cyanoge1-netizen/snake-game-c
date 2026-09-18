@@ -91,8 +91,8 @@ gantt
     Static Snake Head         :done, m2, 1, 1
     section Gameplay
     Turn-Based Movement       :done, m3, 2, 1
-    Screen Clear & Buffer     :active, m4_prep, 3, 1
-    Food & Collision          :m4, 4, 1
+    Screen Clear & Buffer     :done, m4_prep, 3, 1
+    Food & Collision          :active, m4, 4, 1
     Real-Time Input & Body    :m5, 5, 1
 ```
 
@@ -133,9 +133,11 @@ Sylhet Engineering College
 
 ## 📝 Changelog
 
-### [Unreleased] - In Progress
-- Fixed input buffer handling and quit (`q`) command behavior.
-- Working on screen clearing and collision detection.
+### [0.2.1] - 2026-09-18
+- Added `system("clear")` to eliminate terminal scrolling and simulate stationary frame rendering.
+- Sanitized input stream using `getchar()` buffer flushing to prevent empty newline double-frames.
+- Added full support for uppercase movement keys (`W`, `A`, `S`, `D`).
+- Fixed unresponsive quit functionality via `q` / `Q`.
 
 ### [0.2.0] - Milestone 3
 - Added interactive game loop using `while(1)`.
