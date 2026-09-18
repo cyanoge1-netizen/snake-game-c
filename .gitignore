@@ -1,0 +1,7 @@
+#C compiler output
+*.out
+*.exe
+boundary
+#for object file
+*.o
+
