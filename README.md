@@ -1,0 +1,133 @@
+# 🐍 Snake Game in C
+
+A minimalist, terminal-based Snake game built in pure C. This project is a hands-on exploration of core computer science fundamentals — low-level coordinate mathematics, game loop architecture, and disciplined Git version control workflows.
+
+![Language](https://img.shields.io/badge/language-C-blue.svg)
+![Platform](https://img.shields.io/badge/platform-terminal-lightgrey.svg)
+![Status](https://img.shields.io/badge/status-in--progress-yellow.svg)
+
+---
+
+## 📐 1. Core Architecture & Mental Model
+
+### The 2D Coordinate Grid
+
+Unlike traditional Cartesian coordinates where `y` increases upwards, terminal screens use **matrix row-column indexing**:
+
+- **Origin `(0, 0)`** is located at the **top-left** corner.
+- **X-Axis (Columns):** Runs horizontally, left → right (`0` to `width - 1`).
+- **Y-Axis (Rows):** Runs vertically, top → bottom (`0` to `height - 1`).
+
+```mermaid
+flowchart TD
+    Origin["(0, 0) Top-Left"] -->|X increases| Right["d: x++  (Right)"]
+    Origin -->|Y increases| Down["s: y++  (Down)"]
+    Center["(x, y) Snake Head"] -->|w: y--| Up["Up"]
+    Center -->|s: y++| DownMove["Down"]
+    Center -->|a: x--| LeftMove["Left"]
+    Center -->|d: x++| RightMove["Right"]
+```
+
+---
+
+## 🔄 2. Game Loop Lifecycle
+
+Every frame follows a deterministic, three-stage pipeline executed inside a continuous loop:
+
+```mermaid
+flowchart TD
+    A["1. Input Processing<br/>(Capture keystrokes: w, a, s, d)"] --> B["2. State Transition<br/>(Mutate x, y coordinates)"]
+    B --> C["3. Frame Render<br/>(Redraw grid buffer)"]
+    C --> A
+```
+
+### State Transition Logic
+
+| Key | Direction | Effect              |
+|-----|-----------|----------------------|
+| `w` | Up        | Decrements row (`y--`) |
+| `s` | Down      | Increments row (`y++`) |
+| `a` | Left      | Decrements column (`x--`) |
+| `d` | Right     | Increments column (`x++`) |
+
+---
+
+## 🖼️ 3. Frame Rendering Pipeline
+
+Rendering is evaluated **per cell**, using nested iteration over rows (`i`) and columns (`j`):
+
+```mermaid
+flowchart TD
+    Start(["For each cell (i, j)"]) --> Boundary{"i == 0 or i == height-1\nor j == 0 or j == width-1?"}
+    Boundary -->|Yes| Wall["Print '#' (Boundary Wall)"]
+    Boundary -->|No| Head{"i == y and j == x?"}
+    Head -->|Yes| SnakeHead["Print 'O' (Snake Head)"]
+    Head -->|No| Empty["Print ' ' (Playable Area)"]
+```
+
+| Cell Type       | Condition                                              | Rendered As |
+|-----------------|----------------------------------------------------------|:-----------:|
+| Boundary Wall    | `i == 0 \|\| i == height-1 \|\| j == 0 \|\| j == width-1` | `#`         |
+| Snake Head       | `i == y && j == x`                                       | `O`         |
+| Playable Area    | *(otherwise)*                                             | ` ` (space) |
+
+---
+
+## 🗺️ 4. Implementation Roadmap
+
+- [x] **Milestone 1:** Construct static boundary box with nested loops.
+- [x] **Milestone 2:** Place static snake head token at grid center (`x=10, y=5`).
+- [ ] **Milestone 3:** Implement turn-based movement loop via coordinate manipulation.
+- [ ] **Milestone 4:** Introduce food generation and collision detection.
+- [ ] **Milestone 5:** Implement real-time non-blocking input and body segment tracking.
+
+```mermaid
+gantt
+    title Development Roadmap
+    dateFormat  X
+    axisFormat %s
+    section Core
+    Static Boundary Box       :done, m1, 0, 1
+    Static Snake Head         :done, m2, 1, 1
+    section Gameplay
+    Turn-Based Movement       :active, m3, 2, 1
+    Food & Collision          :m4, 3, 1
+    Real-Time Input & Body    :m5, 4, 1
+```
+
+---
+
+## ⚙️ 5. Build and Run
+
+### Prerequisites
+
+- Clang or GCC
+
+### Compilation
+
+```bash
+clang boundary.c -o snake
+```
+
+### Execution
+
+```bash
+./snake
+```
+
+---
+
+## 🤝 Contributing
+
+Contributions, issues, and feature requests are welcome. Feel free to check the [issues page](../../issues) or open a pull request.
+
+## 👤 Author
+
+**Suleman Ahmed Shuvo**
+Roll: 43 | Batch: 19
+Dept. of Computer Science & Engineering
+Sylhet Engineering College
+
+## 📄 License
+
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
