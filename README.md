@@ -133,6 +133,12 @@ Sylhet Engineering College
 ---
 
 ## 📝 Changelog
+### [0.4.0] - Milestone 5: Snake Body & Collision Logic
+- Implemented array-based coordinate tracking for body segments (`tailX[100]`, `tailY[100]`).
+- Integrated shift-register algorithmic propagation for multi-segment tail movement.
+- Added dynamic tail growth (`tailLength++`) upon food consumption.
+- Implemented self-collision detection to terminate the game if the head collides with any body segment.
+
 
 ### [0.3.0] - Milestone 4 Complete
 - Implemented boundary collision detection to terminate the loop on wall impact.
