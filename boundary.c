@@ -48,16 +48,21 @@ for(i=0;i<height;i++){
 		printf("Exiting Game...\n");
 		break;
 }
-	else if(move == 'w'|| move == 'W')
+	else if(move == 'w'|| move == 'W' || move == '2')
 		y--; //going up
-	else if(move == 's' || move == 'S')
+	else if(move == 's' || move == 'S' || move == '8')
 		y++; //going down
-	else if(move == 'd' || move == 'D')
+	else if(move == 'd' || move == 'D' || move == '6')
 		x++; //going right
-	else if(move == 'a' || move == 'A')
+	else if(move == 'a' || move == 'A' || move == '4')
 		x--; //going left
 
-
+	// colision logic
+	if(x <= 0 || x >= width-1 || y <= 0 || y >= height-1){
+		system("clear");
+		printf("\n Game Over !  Youve Hit the Wall !! \n\n");
+		break;
+}
 }
 return 0;
 
@@ -66,3 +71,4 @@ return 0;
 
 //program ends here
 }
+

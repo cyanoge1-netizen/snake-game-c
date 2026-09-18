@@ -45,10 +45,11 @@ flowchart TD
 
 | Key | Direction | Effect              |
 |-----|-----------|----------------------|
-| `w` | Up        | Decrements row (`y--`) |
-| `s` | Down      | Increments row (`y++`) |
-| `a` | Left      | Decrements column (`x--`) |
-| `d` | Right     | Increments column (`x++`) |
+| `w` / `W` / `2` | Up        | Decrements row (`y--`) |
+| `s` / `S` / `8` | Down      | Increments row (`y++`) |
+| `a` / `A` / `4` | Left      | Decrements column (`x--`) |
+| `d` / `D` / `6` | Right     | Increments column (`x++`) |
+| `q` / `Q` | Exit      | Terminates the game loop |
 
 ---
 
@@ -132,6 +133,10 @@ Sylhet Engineering College
 ---
 
 ## 📝 Changelog
+
+### [0.3.0] - Milestone 4 (In Progress)
+- Added boundary collision detection terminating the loop on wall impact.
+- Added support for numeric keypad controls (`2`, `8`, `4`, `6`).
 
 ### [0.2.1] - 2026-09-18
 - Added `system("clear")` to eliminate terminal scrolling and simulate stationary frame rendering.
