@@ -77,7 +77,7 @@ flowchart TD
 
 - [x] **Milestone 1:** Construct static boundary box with nested loops.
 - [x] **Milestone 2:** Place static snake head token at grid center (`x=10, y=5`).
-- [ ] **Milestone 3:** Implement turn-based movement loop via coordinate manipulation.
+- [x] **Milestone 3:** Implement turn-based movement loop via coordinate manipulation.
 - [ ] **Milestone 4:** Introduce food generation and collision detection.
 - [ ] **Milestone 5:** Implement real-time non-blocking input and body segment tracking.
 
@@ -90,9 +90,10 @@ gantt
     Static Boundary Box       :done, m1, 0, 1
     Static Snake Head         :done, m2, 1, 1
     section Gameplay
-    Turn-Based Movement       :active, m3, 2, 1
-    Food & Collision          :m4, 3, 1
-    Real-Time Input & Body    :m5, 4, 1
+    Turn-Based Movement       :done, m3, 2, 1
+    Screen Clear & Buffer     :active, m4_prep, 3, 1
+    Food & Collision          :m4, 4, 1
+    Real-Time Input & Body    :m5, 5, 1
 ```
 
 ---
