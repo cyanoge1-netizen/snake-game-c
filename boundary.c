@@ -2,50 +2,60 @@
 #include <stdlib.h>
 #include <time.h>
 
+// Movement directions
+enum Direction {
+    DIR_STOP = 0,
+    DIR_UP,
+    DIR_DOWN,
+    DIR_LEFT,
+    DIR_RIGHT
+};
+
 int main() {
     int height = 10, width = 20, i, j;
     int x = 10, y = 5;
     int score = 0;
     char move;
+    enum Direction dir = DIR_STOP;
 
-    // Body segment tracking arrays and length counter
+    // Store tail segment coordinates
     int tailX[100] = {0}, tailY[100] = {0};
     int tailLength = 0;
 
-    // Seed pseudo-random generator
+    // Seed random generator for food
     srand(time(NULL));
 
-    // Initial food coordinates (bounded within walls)
+    // Place initial food inside the boundary
     int foodX = (rand() % (width - 2)) + 1;
     int foodY = (rand() % (height - 2)) + 1;
 
     while (1) {
         system("clear");
 
-        // Render game board
+        // Draw game board
         for (i = 0; i < height; i++) {
             for (j = 0; j < width; j++) {
                 if (i == 0 || i == height - 1 || j == 0 || j == width - 1) {
-                    printf("#"); // Boundary wall
+                    printf("#"); // Wall
                 }
                 else if (i == y && j == x) {
                     printf("O"); // Snake head
                 }
                 else if (i == foodY && j == foodX) {
-                    printf("*"); // Food token
+                    printf("*"); // Food
                 }
                 else {
-                    // Check if current coordinate belongs to a body segment
+                    // Check if this cell has a body part
                     int printTail = 0;
                     for (int k = 0; k < tailLength; k++) {
                         if (tailX[k] == j && tailY[k] == i) {
-                            printf("o"); // Body segment
+                            printf("o"); // Body part
                             printTail = 1;
                             break;
                         }
                     }
                     if (!printTail) {
-                        printf(" "); // Empty playable space
+                        printf(" "); // Empty space
                     }
                 }
             }
@@ -56,22 +66,48 @@ int main() {
         printf("Move (w/a/s/d or 2/4/6/8, q to exit): ");
         fflush(stdout);
 
-        // Capture input and handle unexpected EOF
+        // Read move
         if (scanf(" %c", &move) != 1) {
             break;
         }
 
-        // Flush standard input buffer to discard trailing newline
+        // Flush extra input safely
         int flushChar;
         while ((flushChar = getchar()) != '\n' && flushChar != EOF);
 
-        // Check for termination command
+        // Quit if Q is pressed
         if (move == 'q' || move == 'Q') {
             printf("Exiting Game...\n");
             break;
         }
 
-        // Shift register logic: propagate coordinates down the body segments
+        // Pick new direction from key
+        enum Direction newDir = dir;
+        if (move == 'w' || move == 'W' || move == '2')
+            newDir = DIR_UP;
+        else if (move == 's' || move == 'S' || move == '8')
+            newDir = DIR_DOWN;
+        else if (move == 'd' || move == 'D' || move == '6')
+            newDir = DIR_RIGHT;
+        else if (move == 'a' || move == 'A' || move == '4')
+            newDir = DIR_LEFT;
+        else {
+            // Ignore unrecognized keys without moving
+            continue;
+        }
+
+        // Don't let snake turn directly backwards into itself
+        if (tailLength > 0) {
+            if ((dir == DIR_UP && newDir == DIR_DOWN) ||
+                (dir == DIR_DOWN && newDir == DIR_UP) ||
+                (dir == DIR_LEFT && newDir == DIR_RIGHT) ||
+                (dir == DIR_RIGHT && newDir == DIR_LEFT)) {
+                continue; // Ignore opposite direction
+            }
+        }
+        dir = newDir;
+
+        // Move tail: each part takes the position of the one ahead of it
         int prevX = x;
         int prevY = y;
         int prev2X, prev2Y;
@@ -85,25 +121,25 @@ int main() {
             prevY = prev2Y;
         }
 
-        // Update head coordinates based on input
-        if (move == 'w' || move == 'W' || move == '2')
+        // Move head in chosen direction
+        if (dir == DIR_UP)
             y--; // Move up
-        else if (move == 's' || move == 'S' || move == '8')
+        else if (dir == DIR_DOWN)
             y++; // Move down
-        else if (move == 'd' || move == 'D' || move == '6')
+        else if (dir == DIR_RIGHT)
             x++; // Move right
-        else if (move == 'a' || move == 'A' || move == '4')
+        else if (dir == DIR_LEFT)
             x--; // Move left
 
-        // Boundary collision detection
+        // Wall collision
         if (x <= 0 || x >= width - 1 || y <= 0 || y >= height - 1) {
             system("clear");
-            printf("\n💥 Game Over! You've Hit the Wall!!\n");
+            printf("\n💥 Game Over! You hit the wall!\n");
             printf("Final Score: %d\n\n", score);
             break;
         }
 
-        // Self-collision detection: check if head collides with any body segment
+        // Self-collision: did head hit any tail piece?
         int selfCollision = 0;
         for (int k = 0; k < tailLength; k++) {
             if (tailX[k] == x && tailY[k] == y) {
@@ -114,7 +150,7 @@ int main() {
 
         if (selfCollision) {
             system("clear");
-            printf("\n💥 Game Over! You bit your own tail!!\n");
+            printf("\n💥 Game Over! You bit your own tail!\n");
             printf("Final Score: %d\n\n", score);
             break;
         }
