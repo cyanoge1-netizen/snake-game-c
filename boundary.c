@@ -9,7 +9,7 @@ int main() {
     char move;
 
     // Body segment tracking arrays and length counter
-    int tailX[100], tailY[100];
+    int tailX[100] = {0}, tailY[100] = {0};
     int tailLength = 0;
 
     // Seed pseudo-random generator
@@ -29,7 +29,7 @@ int main() {
                     printf("#"); // Boundary wall
                 }
                 else if (i == y && j == x) {
-                    printf("0"); // Snake head
+                    printf("O"); // Snake head
                 }
                 else if (i == foodY && j == foodX) {
                     printf("*"); // Food token
@@ -62,7 +62,8 @@ int main() {
         }
 
         // Flush standard input buffer to discard trailing newline
-        while (getchar() != '\n');
+        int flushChar;
+        while ((flushChar = getchar()) != '\n' && flushChar != EOF);
 
         // Check for termination command
         if (move == 'q' || move == 'Q') {
@@ -118,14 +119,31 @@ int main() {
             break;
         }
 
-        // Food consumption logic and body elongation
+        // Ate food: add point, grow tail, spawn new food
         if (x == foodX && y == foodY) {
             score++;
-            tailLength++; // Grow body by one segment
+            if (tailLength < 99) {
+                tailLength++; // Grow by 1 segment
+            }
+
+            // Pick a new food spot not on the snake
+            int onSnake;
             do {
+                onSnake = 0;
                 foodX = (rand() % (width - 2)) + 1;
                 foodY = (rand() % (height - 2)) + 1;
-            } while (foodX == x && foodY == y);
+
+                if (foodX == x && foodY == y) {
+                    onSnake = 1;
+                } else {
+                    for (int k = 0; k < tailLength; k++) {
+                        if (tailX[k] == foodX && tailY[k] == foodY) {
+                            onSnake = 1;
+                            break;
+                        }
+                    }
+                }
+            } while (onSnake);
         }
     }
 

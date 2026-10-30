@@ -5,3 +5,4 @@ boundary
 #for object file
 *.o
 
+snake
