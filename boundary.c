@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <termios.h>
+#include <unistd.h>
 
 // Movement directions
 enum Direction {
@@ -11,11 +13,46 @@ enum Direction {
     DIR_RIGHT
 };
 
+static struct termios orig_termios;
+
+// Restore terminal settings and show cursor when exiting
+void disableRawMode(void) {
+    tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios);
+    printf("\033[?25h"); // Show cursor
+    fflush(stdout);
+}
+
+// Turn on raw mode so keys are read immediately without waiting for Enter
+void enableRawMode(void) {
+    if (!isatty(STDIN_FILENO)) {
+        return;
+    }
+    tcgetattr(STDIN_FILENO, &orig_termios);
+    atexit(disableRawMode);
+
+    struct termios raw = orig_termios;
+    raw.c_lflag &= ~(ECHO | ICANON); // Don't print typed keys, don't wait for Enter
+    raw.c_cc[VMIN] = 0;              // Return right away even if no key was pressed
+    raw.c_cc[VTIME] = 0;
+
+    tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
+    printf("\033[?25l"); // Hide cursor while playing
+    fflush(stdout);
+}
+
+// Read non-blocking key press
+char readKey(void) {
+    char c = 0;
+    if (read(STDIN_FILENO, &c, 1) == 1) {
+        return c;
+    }
+    return 0;
+}
+
 int main() {
     int height = 10, width = 20, i, j;
     int x = 10, y = 5;
     int score = 0;
-    char move;
     enum Direction dir = DIR_STOP;
 
     // Store tail segment coordinates
@@ -29,8 +66,13 @@ int main() {
     int foodX = (rand() % (width - 2)) + 1;
     int foodY = (rand() % (height - 2)) + 1;
 
+    // Setup terminal
+    enableRawMode();
+    system("clear");
+
     while (1) {
-        system("clear");
+        // Move cursor back to top-left to redraw without screen flicker
+        printf("\033[H");
 
         // Draw game board
         for (i = 0; i < height; i++) {
@@ -62,125 +104,125 @@ int main() {
             printf("\n");
         }
 
-        printf("Score: %d\n", score);
-        printf("Move (w/a/s/d or 2/4/6/8, q to exit): ");
+        printf("Score: %-4d\n", score);
+        if (dir == DIR_STOP) {
+            printf("Controls: Press W/A/S/D or 2/4/6/8 to start (Q to exit) \n");
+        } else {
+            printf("Controls: W/A/S/D to steer, Q to exit                    \n");
+        }
         fflush(stdout);
 
-        // Read move
-        if (scanf(" %c", &move) != 1) {
+        // Check for player input
+        char key = readKey();
+
+        // Quit game
+        if (key == 'q' || key == 'Q') {
+            printf("\nExiting Game...\n");
             break;
         }
 
-        // Flush extra input safely
-        int flushChar;
-        while ((flushChar = getchar()) != '\n' && flushChar != EOF);
-
-        // Quit if Q is pressed
-        if (move == 'q' || move == 'Q') {
-            printf("Exiting Game...\n");
-            break;
-        }
-
-        // Pick new direction from key
+        // Steer snake
         enum Direction newDir = dir;
-        if (move == 'w' || move == 'W' || move == '2')
+        if (key == 'w' || key == 'W' || key == '2')
             newDir = DIR_UP;
-        else if (move == 's' || move == 'S' || move == '8')
+        else if (key == 's' || key == 'S' || key == '8')
             newDir = DIR_DOWN;
-        else if (move == 'd' || move == 'D' || move == '6')
+        else if (key == 'd' || key == 'D' || key == '6')
             newDir = DIR_RIGHT;
-        else if (move == 'a' || move == 'A' || move == '4')
+        else if (key == 'a' || key == 'A' || key == '4')
             newDir = DIR_LEFT;
-        else {
-            // Ignore unrecognized keys without moving
-            continue;
-        }
 
         // Don't let snake turn directly backwards into itself
-        if (tailLength > 0) {
+        if (newDir != dir && tailLength > 0) {
             if ((dir == DIR_UP && newDir == DIR_DOWN) ||
                 (dir == DIR_DOWN && newDir == DIR_UP) ||
                 (dir == DIR_LEFT && newDir == DIR_RIGHT) ||
                 (dir == DIR_RIGHT && newDir == DIR_LEFT)) {
-                continue; // Ignore opposite direction
+                newDir = dir; // Ignore opposite direction
             }
         }
         dir = newDir;
 
-        // Move tail: each part takes the position of the one ahead of it
-        int prevX = x;
-        int prevY = y;
-        int prev2X, prev2Y;
+        // Move the snake once started
+        if (dir != DIR_STOP) {
+            // Move tail: each part takes the position of the one ahead of it
+            int prevX = x;
+            int prevY = y;
+            int prev2X, prev2Y;
 
-        for (int k = 0; k < tailLength; k++) {
-            prev2X = tailX[k];
-            prev2Y = tailY[k];
-            tailX[k] = prevX;
-            tailY[k] = prevY;
-            prevX = prev2X;
-            prevY = prev2Y;
-        }
+            for (int k = 0; k < tailLength; k++) {
+                prev2X = tailX[k];
+                prev2Y = tailY[k];
+                tailX[k] = prevX;
+                tailY[k] = prevY;
+                prevX = prev2X;
+                prevY = prev2Y;
+            }
 
-        // Move head in chosen direction
-        if (dir == DIR_UP)
-            y--; // Move up
-        else if (dir == DIR_DOWN)
-            y++; // Move down
-        else if (dir == DIR_RIGHT)
-            x++; // Move right
-        else if (dir == DIR_LEFT)
-            x--; // Move left
+            // Move head in chosen direction
+            if (dir == DIR_UP)
+                y--; // Move up
+            else if (dir == DIR_DOWN)
+                y++; // Move down
+            else if (dir == DIR_RIGHT)
+                x++; // Move right
+            else if (dir == DIR_LEFT)
+                x--; // Move left
 
-        // Wall collision
-        if (x <= 0 || x >= width - 1 || y <= 0 || y >= height - 1) {
-            system("clear");
-            printf("\n💥 Game Over! You hit the wall!\n");
-            printf("Final Score: %d\n\n", score);
-            break;
-        }
-
-        // Self-collision: did head hit any tail piece?
-        int selfCollision = 0;
-        for (int k = 0; k < tailLength; k++) {
-            if (tailX[k] == x && tailY[k] == y) {
-                selfCollision = 1;
+            // Wall collision
+            if (x <= 0 || x >= width - 1 || y <= 0 || y >= height - 1) {
+                system("clear");
+                printf("\n💥 Game Over! You hit the wall!\n");
+                printf("Final Score: %d\n\n", score);
                 break;
             }
-        }
 
-        if (selfCollision) {
-            system("clear");
-            printf("\n💥 Game Over! You bit your own tail!\n");
-            printf("Final Score: %d\n\n", score);
-            break;
-        }
-
-        // Ate food: add point, grow tail, spawn new food
-        if (x == foodX && y == foodY) {
-            score++;
-            if (tailLength < 99) {
-                tailLength++; // Grow by 1 segment
+            // Self-collision: did head hit any tail piece?
+            int selfCollision = 0;
+            for (int k = 0; k < tailLength; k++) {
+                if (tailX[k] == x && tailY[k] == y) {
+                    selfCollision = 1;
+                    break;
+                }
             }
 
-            // Pick a new food spot not on the snake
-            int onSnake;
-            do {
-                onSnake = 0;
-                foodX = (rand() % (width - 2)) + 1;
-                foodY = (rand() % (height - 2)) + 1;
+            if (selfCollision) {
+                system("clear");
+                printf("\n💥 Game Over! You bit your own tail!\n");
+                printf("Final Score: %d\n\n", score);
+                break;
+            }
 
-                if (foodX == x && foodY == y) {
-                    onSnake = 1;
-                } else {
-                    for (int k = 0; k < tailLength; k++) {
-                        if (tailX[k] == foodX && tailY[k] == foodY) {
-                            onSnake = 1;
-                            break;
+            // Ate food: add point, grow tail, spawn new food
+            if (x == foodX && y == foodY) {
+                score++;
+                if (tailLength < 99) {
+                    tailLength++; // Grow by 1 segment
+                }
+
+                // Pick a new food spot not on the snake
+                int onSnake;
+                do {
+                    onSnake = 0;
+                    foodX = (rand() % (width - 2)) + 1;
+                    foodY = (rand() % (height - 2)) + 1;
+
+                    if (foodX == x && foodY == y) {
+                        onSnake = 1;
+                    } else {
+                        for (int k = 0; k < tailLength; k++) {
+                            if (tailX[k] == foodX && tailY[k] == foodY) {
+                                onSnake = 1;
+                                break;
+                            }
                         }
                     }
-                }
-            } while (onSnake);
+                } while (onSnake);
+            }
         }
+
+        // Frame delay (~120ms tick)
+        usleep(120000);
     }
 
     return 0;
