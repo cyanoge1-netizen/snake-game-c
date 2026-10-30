@@ -40,10 +40,24 @@ void enableRawMode(void) {
     fflush(stdout);
 }
 
-// Read non-blocking key press
+// Read non-blocking key press, including arrow keys
 char readKey(void) {
     char c = 0;
     if (read(STDIN_FILENO, &c, 1) == 1) {
+        if (c == '\033') {
+            char seq[2];
+            if (read(STDIN_FILENO, &seq[0], 1) == 1 && read(STDIN_FILENO, &seq[1], 1) == 1) {
+                if (seq[0] == '[') {
+                    switch (seq[1]) {
+                        case 'A': return 'w'; // Up arrow
+                        case 'B': return 's'; // Down arrow
+                        case 'C': return 'd'; // Right arrow
+                        case 'D': return 'a'; // Left arrow
+                    }
+                }
+            }
+            return 0; // Other escape sequence
+        }
         return c;
     }
     return 0;
@@ -53,6 +67,7 @@ int main() {
     int height = 10, width = 20, i, j;
     int x = 10, y = 5;
     int score = 0;
+    int isPaused = 0;
     enum Direction dir = DIR_STOP;
 
     // Store tail segment coordinates
@@ -105,10 +120,12 @@ int main() {
         }
 
         printf("Score: %-4d\n", score);
-        if (dir == DIR_STOP) {
-            printf("Controls: Press W/A/S/D or 2/4/6/8 to start (Q to exit) \n");
+        if (isPaused) {
+            printf("Game paused! Press P to resume, Q to exit            \n");
+        } else if (dir == DIR_STOP) {
+            printf("Controls: Press W/A/S/D or Arrows to start (Q to exit) \n");
         } else {
-            printf("Controls: W/A/S/D to steer, Q to exit                    \n");
+            printf("Controls: W/A/S/D or Arrows, P to pause, Q to exit     \n");
         }
         fflush(stdout);
 
@@ -121,30 +138,37 @@ int main() {
             break;
         }
 
-        // Steer snake
-        enum Direction newDir = dir;
-        if (key == 'w' || key == 'W' || key == '2')
-            newDir = DIR_UP;
-        else if (key == 's' || key == 'S' || key == '8')
-            newDir = DIR_DOWN;
-        else if (key == 'd' || key == 'D' || key == '6')
-            newDir = DIR_RIGHT;
-        else if (key == 'a' || key == 'A' || key == '4')
-            newDir = DIR_LEFT;
-
-        // Don't let snake turn directly backwards into itself
-        if (newDir != dir && tailLength > 0) {
-            if ((dir == DIR_UP && newDir == DIR_DOWN) ||
-                (dir == DIR_DOWN && newDir == DIR_UP) ||
-                (dir == DIR_LEFT && newDir == DIR_RIGHT) ||
-                (dir == DIR_RIGHT && newDir == DIR_LEFT)) {
-                newDir = dir; // Ignore opposite direction
-            }
+        // Toggle pause
+        if (key == 'p' || key == 'P') {
+            isPaused = !isPaused;
         }
-        dir = newDir;
 
-        // Move the snake once started
-        if (dir != DIR_STOP) {
+        // Steer snake only if not paused
+        if (!isPaused) {
+            enum Direction newDir = dir;
+            if (key == 'w' || key == 'W' || key == '2')
+                newDir = DIR_UP;
+            else if (key == 's' || key == 'S' || key == '8')
+                newDir = DIR_DOWN;
+            else if (key == 'd' || key == 'D' || key == '6')
+                newDir = DIR_RIGHT;
+            else if (key == 'a' || key == 'A' || key == '4')
+                newDir = DIR_LEFT;
+
+            // Don't let snake turn directly backwards into itself
+            if (newDir != dir && tailLength > 0) {
+                if ((dir == DIR_UP && newDir == DIR_DOWN) ||
+                    (dir == DIR_DOWN && newDir == DIR_UP) ||
+                    (dir == DIR_LEFT && newDir == DIR_RIGHT) ||
+                    (dir == DIR_RIGHT && newDir == DIR_LEFT)) {
+                    newDir = dir; // Ignore opposite direction
+                }
+            }
+            dir = newDir;
+        }
+
+        // Move the snake once started (and not paused)
+        if (!isPaused && dir != DIR_STOP) {
             // Move tail: each part takes the position of the one ahead of it
             int prevX = x;
             int prevY = y;
