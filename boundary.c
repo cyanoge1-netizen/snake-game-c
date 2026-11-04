@@ -227,28 +227,59 @@ int main() {
             else if (dir == DIR_LEFT)
                 x--; // Move left
 
-            // Wall collision
+            int gameOver = 0;
+
+            // Check wall collision
             if (x <= 0 || x >= width - 1 || y <= 0 || y >= height - 1) {
                 system("clear");
                 printf("\n💥 Game Over! You hit the wall!\n");
-                printf("Final Score: %d | High Score: %d\n\n", score, highScore);
-                break;
+                gameOver = 1;
             }
 
-            // Self-collision: did head hit any tail piece?
-            int selfCollision = 0;
-            for (int k = 0; k < tailLength; k++) {
-                if (tailX[k] == x && tailY[k] == y) {
-                    selfCollision = 1;
-                    break;
+            // Check self-collision
+            if (!gameOver) {
+                for (int k = 0; k < tailLength; k++) {
+                    if (tailX[k] == x && tailY[k] == y) {
+                        system("clear");
+                        printf("\n💥 Game Over! You bit your own tail!\n");
+                        gameOver = 1;
+                        break;
+                    }
                 }
             }
 
-            if (selfCollision) {
-                system("clear");
-                printf("\n💥 Game Over! You bit your own tail!\n");
+            // If player died, show score and offer to play again
+            if (gameOver) {
                 printf("Final Score: %d | High Score: %d\n\n", score, highScore);
-                break;
+                printf("Play again? (y/n): ");
+                fflush(stdout);
+
+                // Wait for player to press Y or N
+                char again = 0;
+                while (again != 'y' && again != 'Y' && again != 'n' && again != 'N' && again != 'q' && again != 'Q') {
+                    again = readKey();
+                    usleep(20000);
+                }
+
+                if (again == 'y' || again == 'Y') {
+                    // Reset snake state for another round
+                    x = 10;
+                    y = 5;
+                    score = 0;
+                    tailLength = 0;
+                    dir = DIR_STOP;
+                    isPaused = 0;
+                    do {
+                        foodX = (rand() % (width - 2)) + 1;
+                        foodY = (rand() % (height - 2)) + 1;
+                    } while (foodX == x && foodY == y);
+
+                    system("clear");
+                    continue;
+                } else {
+                    printf("\nThanks for playing!\n");
+                    break;
+                }
             }
 
             // Ate food: add point, grow tail, spawn new food
