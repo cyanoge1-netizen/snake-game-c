@@ -69,6 +69,8 @@ int main() {
     int score = 0;
     int highScore = 0;
     int isPaused = 0;
+    int speedDelay = 110000;
+    char speedChoice;
     enum Direction dir = DIR_STOP;
 
     // Load saved high score from file
@@ -78,6 +80,28 @@ int main() {
             highScore = 0;
         }
         fclose(scoreFile);
+    }
+
+    // Ask player to pick difficulty speed
+    system("clear");
+    printf("========================\n");
+    printf("     Snake Game in C    \n");
+    printf("========================\n\n");
+    printf("Choose difficulty:\n");
+    printf("  1. Easy   (Slow)\n");
+    printf("  2. Medium (Normal)\n");
+    printf("  3. Hard   (Fast)\n\n");
+    printf("Select (1-3, default 2): ");
+    fflush(stdout);
+
+    if (scanf(" %c", &speedChoice) == 1) {
+        if (speedChoice == '1') {
+            speedDelay = 170000; // 170ms
+        } else if (speedChoice == '3') {
+            speedDelay = 70000;  // 70ms
+        } else {
+            speedDelay = 110000; // 110ms
+        }
     }
 
     // Store tail segment coordinates
@@ -258,8 +282,8 @@ int main() {
             }
         }
 
-        // Frame delay (~120ms tick)
-        usleep(120000);
+        // Frame delay based on chosen difficulty
+        usleep(speedDelay);
     }
 
     // Save high score before exiting
