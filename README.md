@@ -4,7 +4,7 @@ A classic Snake game for the terminal, written in pure C without any external gr
 
 ![Language](https://img.shields.io/badge/language-C-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-terminal-lightgrey.svg)
-![Status](https://img.shields.io/badge/status-in--progress-yellow.svg)
+![Status](https://img.shields.io/badge/status-completed-brightgreen.svg)
 
 ---
 
@@ -49,6 +49,7 @@ flowchart TD
 | `d` / `D` / `6` / `→` | Move Right | Moves right one column (`x++`) |
 | `p` / `P` | Pause | Pauses or unpauses the game |
 | `q` / `Q` | Quit | Exits the game cleanly |
+| `y` / `Y` | Play Again | Restarts a new round after game over |
 
 ---
 
@@ -73,7 +74,8 @@ Every frame, the game loops through each row (`i`) and column (`j`) to print the
 - [x] **Milestone 3:** Add movement loop so the head can move with keys.
 - [x] **Milestone 4:** Add food, score counter, and wall collision.
 - [x] **Milestone 5:** Add growing tail, self-collision, and smooth real-time movement.
-- [ ] **Milestone 6:** Add difficulty speeds and save high score to a file.
+- [x] **Milestone 6:** Add difficulty speeds and save high score to a file.
+- [x] **Milestone 7:** Add replay option on game over and organize code into helper functions.
 
 ---
 
@@ -108,6 +110,12 @@ Sylhet Engineering College
 ---
 
 ## 📝 Changelog
+
+### [1.0.0] - High score, difficulty, replay, and code cleanup
+- Added persistent high score saved to `highscore.txt`.
+- Added difficulty speed selector at start (Easy, Medium, Hard).
+- Added play again (`y`/`n`) option on game over so you don't have to restart the binary.
+- Split the game into clean, readable helper functions (`drawBoard`, `spawnFood`, `chooseDifficulty`, `loadHighScore`, etc.).
 
 ### [0.5.0] - Real-time movement & game feel
 - Switched to terminal raw mode so the snake moves in real-time without pressing Enter.
