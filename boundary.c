@@ -4,6 +4,10 @@
 #include <termios.h>
 #include <unistd.h>
 
+#define BOARD_WIDTH 20
+#define BOARD_HEIGHT 10
+#define MAX_TAIL 100
+
 // Movement directions
 enum Direction {
     DIR_STOP = 0,
@@ -63,26 +67,31 @@ char readKey(void) {
     return 0;
 }
 
-int main() {
-    int height = 10, width = 20, i, j;
-    int x = 10, y = 5;
-    int score = 0;
+// Load high score from file, or return 0 if file doesn't exist
+int loadHighScore(void) {
     int highScore = 0;
-    int isPaused = 0;
-    int speedDelay = 110000;
-    char speedChoice;
-    enum Direction dir = DIR_STOP;
-
-    // Load saved high score from file
-    FILE *scoreFile = fopen("highscore.txt", "r");
-    if (scoreFile != NULL) {
-        if (fscanf(scoreFile, "%d", &highScore) != 1) {
+    FILE *f = fopen("highscore.txt", "r");
+    if (f != NULL) {
+        if (fscanf(f, "%d", &highScore) != 1) {
             highScore = 0;
         }
-        fclose(scoreFile);
+        fclose(f);
     }
+    return highScore;
+}
 
-    // Ask player to pick difficulty speed
+// Save high score to file
+void saveHighScore(int highScore) {
+    FILE *f = fopen("highscore.txt", "w");
+    if (f != NULL) {
+        fprintf(f, "%d\n", highScore);
+        fclose(f);
+    }
+}
+
+// Prompt player to choose game speed before starting
+int chooseDifficulty(void) {
+    char choice;
     system("clear");
     printf("========================\n");
     printf("     Snake Game in C    \n");
@@ -94,74 +103,100 @@ int main() {
     printf("Select (1-3, default 2): ");
     fflush(stdout);
 
-    if (scanf(" %c", &speedChoice) == 1) {
-        if (speedChoice == '1') {
-            speedDelay = 170000; // 170ms
-        } else if (speedChoice == '3') {
-            speedDelay = 70000;  // 70ms
+    if (scanf(" %c", &choice) == 1) {
+        if (choice == '1') return 170000; // 170ms
+        if (choice == '3') return 70000;  // 70ms
+    }
+    return 110000; // default 110ms (Medium)
+}
+
+// Spawn food on a random empty tile
+void spawnFood(int *foodX, int *foodY, int headX, int headY, const int tailX[], const int tailY[], int tailLength) {
+    int onSnake;
+    do {
+        onSnake = 0;
+        *foodX = (rand() % (BOARD_WIDTH - 2)) + 1;
+        *foodY = (rand() % (BOARD_HEIGHT - 2)) + 1;
+
+        if (*foodX == headX && *foodY == headY) {
+            onSnake = 1;
         } else {
-            speedDelay = 110000; // 110ms
+            for (int k = 0; k < tailLength; k++) {
+                if (tailX[k] == *foodX && tailY[k] == *foodY) {
+                    onSnake = 1;
+                    break;
+                }
+            }
         }
+    } while (onSnake);
+}
+
+// Draw the walls, snake, food, and score banner
+void drawBoard(int headX, int headY, int foodX, int foodY, const int tailX[], const int tailY[], int tailLength, int score, int highScore, int isPaused, enum Direction dir) {
+    printf("\033[H"); // Move cursor back to top-left to redraw without screen flicker
+
+    for (int i = 0; i < BOARD_HEIGHT; i++) {
+        for (int j = 0; j < BOARD_WIDTH; j++) {
+            if (i == 0 || i == BOARD_HEIGHT - 1 || j == 0 || j == BOARD_WIDTH - 1) {
+                printf("#"); // Wall
+            } else if (i == headY && j == headX) {
+                printf("O"); // Snake head
+            } else if (i == foodY && j == foodX) {
+                printf("*"); // Food
+            } else {
+                int printTail = 0;
+                for (int k = 0; k < tailLength; k++) {
+                    if (tailX[k] == j && tailY[k] == i) {
+                        printf("o"); // Body part
+                        printTail = 1;
+                        break;
+                    }
+                }
+                if (!printTail) {
+                    printf(" "); // Empty space
+                }
+            }
+        }
+        printf("\n");
     }
 
+    printf("Score: %-4d | High Score: %-4d\n", score, highScore);
+    if (isPaused) {
+        printf("Game paused! Press P to resume, Q to exit            \n");
+    } else if (dir == DIR_STOP) {
+        printf("Controls: Press W/A/S/D or Arrows to start (Q to exit) \n");
+    } else {
+        printf("Controls: W/A/S/D or Arrows, P to pause, Q to exit     \n");
+    }
+    fflush(stdout);
+}
+
+int main(void) {
+    int x = 10, y = 5;
+    int score = 0;
+    int highScore = loadHighScore();
+    int isPaused = 0;
+    int speedDelay = chooseDifficulty();
+    enum Direction dir = DIR_STOP;
+
     // Store tail segment coordinates
-    int tailX[100] = {0}, tailY[100] = {0};
+    int tailX[MAX_TAIL] = {0}, tailY[MAX_TAIL] = {0};
     int tailLength = 0;
 
     // Seed random generator for food
-    srand(time(NULL));
+    srand((unsigned int)time(NULL));
 
-    // Place initial food inside the boundary
-    int foodX = (rand() % (width - 2)) + 1;
-    int foodY = (rand() % (height - 2)) + 1;
+    // Place initial food inside boundary
+    int foodX, foodY;
+    spawnFood(&foodX, &foodY, x, y, tailX, tailY, tailLength);
 
     // Setup terminal
     enableRawMode();
     system("clear");
 
     while (1) {
-        // Move cursor back to top-left to redraw without screen flicker
-        printf("\033[H");
-
-        // Draw game board
-        for (i = 0; i < height; i++) {
-            for (j = 0; j < width; j++) {
-                if (i == 0 || i == height - 1 || j == 0 || j == width - 1) {
-                    printf("#"); // Wall
-                }
-                else if (i == y && j == x) {
-                    printf("O"); // Snake head
-                }
-                else if (i == foodY && j == foodX) {
-                    printf("*"); // Food
-                }
-                else {
-                    // Check if this cell has a body part
-                    int printTail = 0;
-                    for (int k = 0; k < tailLength; k++) {
-                        if (tailX[k] == j && tailY[k] == i) {
-                            printf("o"); // Body part
-                            printTail = 1;
-                            break;
-                        }
-                    }
-                    if (!printTail) {
-                        printf(" "); // Empty space
-                    }
-                }
-            }
-            printf("\n");
-        }
-
-        printf("Score: %-4d | High Score: %-4d\n", score, highScore);
-        if (isPaused) {
-            printf("Game paused! Press P to resume, Q to exit            \n");
-        } else if (dir == DIR_STOP) {
-            printf("Controls: Press W/A/S/D or Arrows to start (Q to exit) \n");
-        } else {
-            printf("Controls: W/A/S/D or Arrows, P to pause, Q to exit     \n");
-        }
-        fflush(stdout);
+        // Render current game state
+        drawBoard(x, y, foodX, foodY, tailX, tailY, tailLength, score, highScore, isPaused, dir);
 
         // Check for player input
         char key = readKey();
@@ -230,7 +265,7 @@ int main() {
             int gameOver = 0;
 
             // Check wall collision
-            if (x <= 0 || x >= width - 1 || y <= 0 || y >= height - 1) {
+            if (x <= 0 || x >= BOARD_WIDTH - 1 || y <= 0 || y >= BOARD_HEIGHT - 1) {
                 system("clear");
                 printf("\n💥 Game Over! You hit the wall!\n");
                 gameOver = 1;
@@ -269,11 +304,7 @@ int main() {
                     tailLength = 0;
                     dir = DIR_STOP;
                     isPaused = 0;
-                    do {
-                        foodX = (rand() % (width - 2)) + 1;
-                        foodY = (rand() % (height - 2)) + 1;
-                    } while (foodX == x && foodY == y);
-
+                    spawnFood(&foodX, &foodY, x, y, tailX, tailY, tailLength);
                     system("clear");
                     continue;
                 } else {
@@ -288,28 +319,12 @@ int main() {
                 if (score > highScore) {
                     highScore = score;
                 }
-                if (tailLength < 99) {
+                if (tailLength < MAX_TAIL - 1) {
                     tailLength++; // Grow by 1 segment
                 }
 
                 // Pick a new food spot not on the snake
-                int onSnake;
-                do {
-                    onSnake = 0;
-                    foodX = (rand() % (width - 2)) + 1;
-                    foodY = (rand() % (height - 2)) + 1;
-
-                    if (foodX == x && foodY == y) {
-                        onSnake = 1;
-                    } else {
-                        for (int k = 0; k < tailLength; k++) {
-                            if (tailX[k] == foodX && tailY[k] == foodY) {
-                                onSnake = 1;
-                                break;
-                            }
-                        }
-                    }
-                } while (onSnake);
+                spawnFood(&foodX, &foodY, x, y, tailX, tailY, tailLength);
             }
         }
 
@@ -318,11 +333,7 @@ int main() {
     }
 
     // Save high score before exiting
-    scoreFile = fopen("highscore.txt", "w");
-    if (scoreFile != NULL) {
-        fprintf(scoreFile, "%d\n", highScore);
-        fclose(scoreFile);
-    }
+    saveHighScore(highScore);
 
     return 0;
 }
