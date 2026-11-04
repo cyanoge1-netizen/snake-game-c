@@ -67,8 +67,18 @@ int main() {
     int height = 10, width = 20, i, j;
     int x = 10, y = 5;
     int score = 0;
+    int highScore = 0;
     int isPaused = 0;
     enum Direction dir = DIR_STOP;
+
+    // Load saved high score from file
+    FILE *scoreFile = fopen("highscore.txt", "r");
+    if (scoreFile != NULL) {
+        if (fscanf(scoreFile, "%d", &highScore) != 1) {
+            highScore = 0;
+        }
+        fclose(scoreFile);
+    }
 
     // Store tail segment coordinates
     int tailX[100] = {0}, tailY[100] = {0};
@@ -119,7 +129,7 @@ int main() {
             printf("\n");
         }
 
-        printf("Score: %-4d\n", score);
+        printf("Score: %-4d | High Score: %-4d\n", score, highScore);
         if (isPaused) {
             printf("Game paused! Press P to resume, Q to exit            \n");
         } else if (dir == DIR_STOP) {
@@ -197,7 +207,7 @@ int main() {
             if (x <= 0 || x >= width - 1 || y <= 0 || y >= height - 1) {
                 system("clear");
                 printf("\n💥 Game Over! You hit the wall!\n");
-                printf("Final Score: %d\n\n", score);
+                printf("Final Score: %d | High Score: %d\n\n", score, highScore);
                 break;
             }
 
@@ -213,13 +223,16 @@ int main() {
             if (selfCollision) {
                 system("clear");
                 printf("\n💥 Game Over! You bit your own tail!\n");
-                printf("Final Score: %d\n\n", score);
+                printf("Final Score: %d | High Score: %d\n\n", score, highScore);
                 break;
             }
 
             // Ate food: add point, grow tail, spawn new food
             if (x == foodX && y == foodY) {
                 score++;
+                if (score > highScore) {
+                    highScore = score;
+                }
                 if (tailLength < 99) {
                     tailLength++; // Grow by 1 segment
                 }
@@ -247,6 +260,13 @@ int main() {
 
         // Frame delay (~120ms tick)
         usleep(120000);
+    }
+
+    // Save high score before exiting
+    scoreFile = fopen("highscore.txt", "w");
+    if (scoreFile != NULL) {
+        fprintf(scoreFile, "%d\n", highScore);
+        fclose(scoreFile);
     }
 
     return 0;

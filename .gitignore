@@ -6,3 +6,4 @@ boundary
 *.o
 
 snake
+highscore.txt
